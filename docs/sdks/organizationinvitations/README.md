@@ -5,13 +5,67 @@
 
 ### Available Operations
 
-* [create](#create) - Create and send an organization invitation
-* [bulkCreate](#bulkcreate) - Bulk create and send organization invitations
-* [get](#get) - Retrieve an organization invitation by ID
 * [getAll](#getall) - Get a list of organization invitations for the current instance
+* [create](#create) - Create and send an organization invitation
 * [list](#list) - Get a list of organization invitations
+* [bulkCreate](#bulkcreate) - Bulk create and send organization invitations
 * [~~listPending~~](#listpending) - Get a list of pending organization invitations :warning: **Deprecated**
+* [get](#get) - Retrieve an organization invitation by ID
 * [revoke](#revoke) - Revoke a pending organization invitation
+
+## getAll
+
+This request returns the list of organization invitations for the instance.
+Results can be paginated using the optional `limit` and `offset` query parameters.
+You can filter them by providing the 'status' query parameter, that accepts multiple values.
+You can change the order by providing the 'order' query parameter, that accepts multiple values.
+You can filter by the invited user email address providing the `query` query parameter.
+The organization invitations are ordered by descending creation date by default.
+
+### Example Usage
+
+```php
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use Clerk\Backend;
+use Clerk\Backend\Models\Operations;
+
+$sdk = Backend\ClerkBackend::builder()
+    ->setSecurity(
+        '<YOUR_BEARER_TOKEN_HERE>'
+    )
+    ->build();
+
+$request = new Operations\ListInstanceOrganizationInvitationsRequest();
+
+$response = $sdk->organizationInvitations->getAll(
+    request: $request
+);
+
+if ($response->organizationInvitationsWithPublicOrganizationData !== null) {
+    // handle response
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                      | Type                                                                                                                           | Required                                                                                                                       | Description                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `$request`                                                                                                                     | [Operations\ListInstanceOrganizationInvitationsRequest](../../Models/Operations/ListInstanceOrganizationInvitationsRequest.md) | :heavy_check_mark:                                                                                                             | The request object to use for the request.                                                                                     |
+
+### Response
+
+**[?Operations\ListInstanceOrganizationInvitationsResponse](../../Models/Operations/ListInstanceOrganizationInvitationsResponse.md)**
+
+### Errors
+
+| Error Type          | Status Code         | Content Type        |
+| ------------------- | ------------------- | ------------------- |
+| Errors\ClerkErrors  | 400, 404, 422       | application/json    |
+| Errors\ClerkErrors  | 500                 | application/json    |
+| Errors\SDKException | 4XX, 5XX            | \*/\*               |
 
 ## create
 
@@ -82,6 +136,66 @@ if ($response->organizationInvitation !== null) {
 | Errors\ClerkErrors  | 400, 403, 404, 422  | application/json    |
 | Errors\SDKException | 4XX, 5XX            | \*/\*               |
 
+## list
+
+This request returns the list of organization invitations.
+Results can be paginated using the optional `limit` and `offset` query parameters.
+You can filter them by providing the 'status' query parameter, that accepts multiple values.
+The organization invitations are ordered by descending creation date.
+Most recent invitations will be returned first.
+Any invitations created as a result of an Organization Domain are not included in the results.
+
+### Example Usage
+
+```php
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use Clerk\Backend;
+use Clerk\Backend\Models\Operations;
+
+$sdk = Backend\ClerkBackend::builder()
+    ->setSecurity(
+        '<YOUR_BEARER_TOKEN_HERE>'
+    )
+    ->build();
+
+
+
+$response = $sdk->organizationInvitations->list(
+    organizationId: '<id>',
+    status: Operations\ListOrganizationInvitationsQueryParamStatus::Revoked,
+    limit: 10,
+    offset: 0
+
+);
+
+if ($response->organizationInvitations !== null) {
+    // handle response
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                                 | Type                                                                                                                                      | Required                                                                                                                                  | Description                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `organizationId`                                                                                                                          | *string*                                                                                                                                  | :heavy_check_mark:                                                                                                                        | The organization ID.                                                                                                                      |
+| `status`                                                                                                                                  | [?Operations\ListOrganizationInvitationsQueryParamStatus](../../Models/Operations/ListOrganizationInvitationsQueryParamStatus.md)         | :heavy_minus_sign:                                                                                                                        | Filter organization invitations based on their status                                                                                     |
+| `limit`                                                                                                                                   | *?int*                                                                                                                                    | :heavy_minus_sign:                                                                                                                        | Applies a limit to the number of results returned.<br/>Can be used for paginating the results together with `offset`.                     |
+| `offset`                                                                                                                                  | *?int*                                                                                                                                    | :heavy_minus_sign:                                                                                                                        | Skip the first `offset` results when paginating.<br/>Needs to be an integer greater or equal to zero.<br/>To be used in conjunction with `limit`. |
+
+### Response
+
+**[?Operations\ListOrganizationInvitationsResponse](../../Models/Operations/ListOrganizationInvitationsResponse.md)**
+
+### Errors
+
+| Error Type          | Status Code         | Content Type        |
+| ------------------- | ------------------- | ------------------- |
+| Errors\ClerkErrors  | 400, 404            | application/json    |
+| Errors\SDKException | 4XX, 5XX            | \*/\*               |
+
 ## bulkCreate
 
 Creates new organization invitations in bulk and sends out emails to the provided email addresses with a link to accept the invitation and join the organization.
@@ -150,170 +264,6 @@ if ($response->organizationInvitations !== null) {
 | Errors\ClerkErrors  | 400, 403, 404, 422  | application/json    |
 | Errors\SDKException | 4XX, 5XX            | \*/\*               |
 
-## get
-
-Use this request to get an existing organization invitation by ID.
-
-### Example Usage
-
-```php
-declare(strict_types=1);
-
-require 'vendor/autoload.php';
-
-use Clerk\Backend;
-
-$sdk = Backend\ClerkBackend::builder()
-    ->setSecurity(
-        '<YOUR_BEARER_TOKEN_HERE>'
-    )
-    ->build();
-
-
-
-$response = $sdk->organizationInvitations->get(
-    organizationId: '<id>',
-    invitationId: '<id>'
-
-);
-
-if ($response->organizationInvitation !== null) {
-    // handle response
-}
-```
-
-### Parameters
-
-| Parameter                       | Type                            | Required                        | Description                     |
-| ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
-| `organizationId`                | *string*                        | :heavy_check_mark:              | The organization ID.            |
-| `invitationId`                  | *string*                        | :heavy_check_mark:              | The organization invitation ID. |
-
-### Response
-
-**[?Operations\GetOrganizationInvitationResponse](../../Models/Operations/GetOrganizationInvitationResponse.md)**
-
-### Errors
-
-| Error Type          | Status Code         | Content Type        |
-| ------------------- | ------------------- | ------------------- |
-| Errors\ClerkErrors  | 400, 403, 404       | application/json    |
-| Errors\SDKException | 4XX, 5XX            | \*/\*               |
-
-## getAll
-
-This request returns the list of organization invitations for the instance.
-Results can be paginated using the optional `limit` and `offset` query parameters.
-You can filter them by providing the 'status' query parameter, that accepts multiple values.
-You can change the order by providing the 'order' query parameter, that accepts multiple values.
-You can filter by the invited user email address providing the `query` query parameter.
-The organization invitations are ordered by descending creation date by default.
-
-### Example Usage
-
-```php
-declare(strict_types=1);
-
-require 'vendor/autoload.php';
-
-use Clerk\Backend;
-use Clerk\Backend\Models\Operations;
-
-$sdk = Backend\ClerkBackend::builder()
-    ->setSecurity(
-        '<YOUR_BEARER_TOKEN_HERE>'
-    )
-    ->build();
-
-$request = new Operations\ListInstanceOrganizationInvitationsRequest();
-
-$response = $sdk->organizationInvitations->getAll(
-    request: $request
-);
-
-if ($response->organizationInvitationsWithPublicOrganizationData !== null) {
-    // handle response
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                                      | Type                                                                                                                           | Required                                                                                                                       | Description                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `$request`                                                                                                                     | [Operations\ListInstanceOrganizationInvitationsRequest](../../Models/Operations/ListInstanceOrganizationInvitationsRequest.md) | :heavy_check_mark:                                                                                                             | The request object to use for the request.                                                                                     |
-
-### Response
-
-**[?Operations\ListInstanceOrganizationInvitationsResponse](../../Models/Operations/ListInstanceOrganizationInvitationsResponse.md)**
-
-### Errors
-
-| Error Type          | Status Code         | Content Type        |
-| ------------------- | ------------------- | ------------------- |
-| Errors\ClerkErrors  | 400, 404, 422       | application/json    |
-| Errors\ClerkErrors  | 500                 | application/json    |
-| Errors\SDKException | 4XX, 5XX            | \*/\*               |
-
-## list
-
-This request returns the list of organization invitations.
-Results can be paginated using the optional `limit` and `offset` query parameters.
-You can filter them by providing the 'status' query parameter, that accepts multiple values.
-The organization invitations are ordered by descending creation date.
-Most recent invitations will be returned first.
-Any invitations created as a result of an Organization Domain are not included in the results.
-
-### Example Usage
-
-```php
-declare(strict_types=1);
-
-require 'vendor/autoload.php';
-
-use Clerk\Backend;
-use Clerk\Backend\Models\Operations;
-
-$sdk = Backend\ClerkBackend::builder()
-    ->setSecurity(
-        '<YOUR_BEARER_TOKEN_HERE>'
-    )
-    ->build();
-
-
-
-$response = $sdk->organizationInvitations->list(
-    organizationId: '<id>',
-    status: Operations\ListOrganizationInvitationsQueryParamStatus::Revoked,
-    limit: 10,
-    offset: 0
-
-);
-
-if ($response->organizationInvitations !== null) {
-    // handle response
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                                                 | Type                                                                                                                                      | Required                                                                                                                                  | Description                                                                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `organizationId`                                                                                                                          | *string*                                                                                                                                  | :heavy_check_mark:                                                                                                                        | The organization ID.                                                                                                                      |
-| `status`                                                                                                                                  | [?Operations\ListOrganizationInvitationsQueryParamStatus](../../Models/Operations/ListOrganizationInvitationsQueryParamStatus.md)         | :heavy_minus_sign:                                                                                                                        | Filter organization invitations based on their status                                                                                     |
-| `limit`                                                                                                                                   | *?int*                                                                                                                                    | :heavy_minus_sign:                                                                                                                        | Applies a limit to the number of results returned.<br/>Can be used for paginating the results together with `offset`.                     |
-| `offset`                                                                                                                                  | *?int*                                                                                                                                    | :heavy_minus_sign:                                                                                                                        | Skip the first `offset` results when paginating.<br/>Needs to be an integer greater or equal to zero.<br/>To be used in conjunction with `limit`. |
-
-### Response
-
-**[?Operations\ListOrganizationInvitationsResponse](../../Models/Operations/ListOrganizationInvitationsResponse.md)**
-
-### Errors
-
-| Error Type          | Status Code         | Content Type        |
-| ------------------- | ------------------- | ------------------- |
-| Errors\ClerkErrors  | 400, 404            | application/json    |
-| Errors\SDKException | 4XX, 5XX            | \*/\*               |
-
 ## ~~listPending~~
 
 This request returns the list of organization invitations with "pending" status.
@@ -371,6 +321,56 @@ if ($response->organizationInvitations !== null) {
 | Error Type          | Status Code         | Content Type        |
 | ------------------- | ------------------- | ------------------- |
 | Errors\ClerkErrors  | 400, 404            | application/json    |
+| Errors\SDKException | 4XX, 5XX            | \*/\*               |
+
+## get
+
+Use this request to get an existing organization invitation by ID.
+
+### Example Usage
+
+```php
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use Clerk\Backend;
+
+$sdk = Backend\ClerkBackend::builder()
+    ->setSecurity(
+        '<YOUR_BEARER_TOKEN_HERE>'
+    )
+    ->build();
+
+
+
+$response = $sdk->organizationInvitations->get(
+    organizationId: '<id>',
+    invitationId: '<id>'
+
+);
+
+if ($response->organizationInvitation !== null) {
+    // handle response
+}
+```
+
+### Parameters
+
+| Parameter                       | Type                            | Required                        | Description                     |
+| ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
+| `organizationId`                | *string*                        | :heavy_check_mark:              | The organization ID.            |
+| `invitationId`                  | *string*                        | :heavy_check_mark:              | The organization invitation ID. |
+
+### Response
+
+**[?Operations\GetOrganizationInvitationResponse](../../Models/Operations/GetOrganizationInvitationResponse.md)**
+
+### Errors
+
+| Error Type          | Status Code         | Content Type        |
+| ------------------- | ------------------- | ------------------- |
+| Errors\ClerkErrors  | 400, 403, 404       | application/json    |
 | Errors\SDKException | 4XX, 5XX            | \*/\*               |
 
 ## revoke
